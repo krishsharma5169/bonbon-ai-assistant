@@ -23,7 +23,7 @@ The system integrates **FastAPI, Ollama, and DeepSeekCoder** to provide AI-assis
 - Python
 - FastAPI
 - Ollama
-- DeepSeekCoder (LLM)
+- Qwen Coder (LLM)
 
 ### Frontend
 - JavaScript
@@ -46,7 +46,7 @@ FastAPI Backend
 ↓
 Ollama
 ↓
-DeepSeekCoder LLM
+Qwen Coder LLM
 
 1. The **Electron frontend** provides the user interface.
 2. Requests are sent to the **FastAPI backend**.
