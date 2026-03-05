@@ -1,0 +1,4 @@
+Problem,Passed,First Pass Success,Repairs,Critic Rewrite,Time (s)
+Maximum Subarray,True,True,0,False,25.03
+Top K Frequent,True,True,0,False,18.22
+Longest Increasing Subsequence,True,True,0,False,21.38
