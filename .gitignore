@@ -2,6 +2,7 @@ node_modules/
 venv/
 .idea/
 __pycache__/
+backend/chromadb_store/ 
 *.pyc
 .env
 dist/

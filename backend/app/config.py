@@ -15,3 +15,10 @@ FAST_MODE = True
 AUTO_ESCALATE = True
 ESCALATE_ON_REPAIR = True
 ESCALATE_ON_CRITIC_REWRITE = True
+
+# ─────────────────────────────────────────────────
+# RAG Settings
+# ─────────────────────────────────────────────────
+RAG_ENABLED = True           # Toggle RAG on/off globally
+RAG_TOP_K = 3                # How many chunks to retrieve
+RAG_MIN_SCORE = 0.45         # Minimum cosine similarity (0-1) to include a result

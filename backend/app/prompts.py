@@ -1,7 +1,17 @@
-def structured_prompt(problem: str):
+def structured_prompt(problem: str, context: str = ""):
+    # Build optional RAG context block
+    context_block = ""
+    if context and context.strip():
+        context_block = f"""
+RELEVANT KNOWLEDGE BASE (use this to inform your solution):
+---
+{context}
+---
+"""
+
     return f"""
 You are BonBon, an elite competitive programmer.
-
+{context_block}
 STRICTLY follow this structure:
 
 1. Restate the problem clearly.
