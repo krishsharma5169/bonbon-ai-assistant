@@ -6,3 +6,4 @@ backend/chromadb_store/
 *.pyc
 .env
 dist/
+.venv/
