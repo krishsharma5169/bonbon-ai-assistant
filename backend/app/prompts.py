@@ -1,5 +1,4 @@
 def structured_prompt(problem: str, context: str = ""):
-    # Build optional RAG context block
     context_block = ""
     if context and context.strip():
         context_block = f"""
@@ -27,6 +26,11 @@ STRICTLY follow this structure:
 5. Select the BEST approach and justify why.
 
 6. Provide ONLY final Python solution inside ONE ```python code block.
+
+7. After the code block, write a SHORT 2-3 line summary covering:
+   - The approach used
+   - Time complexity
+   - Space complexity
 
 Problem:
 {problem}

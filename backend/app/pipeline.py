@@ -19,6 +19,15 @@ def extract_code(text):
     return text.strip()
 
 
+def extract_explanation(text):
+    match = re.search(r"```python.*?```(.*)", text, re.DOTALL)
+    if match:
+        explanation = match.group(1).strip()
+        if explanation:
+            return explanation
+    return ""
+
+
 def generate_with_mode(problem, use_fast, context: str = ""):
     voting_time = 0
     selected = "Single"
@@ -40,14 +49,14 @@ def generate_with_mode(problem, use_fast, context: str = ""):
         Return ONLY the letter 'A' or 'B' — nothing else.
 
         Solution A:
-        ```python
+```python
         {code_a}
-        ```
+```
 
         Solution B:
-        ```python
+```python
         {code_b}
-        ```
+```
 
         Which solution is more correct and efficient? Reply with only 'A' or 'B'.
         """
@@ -129,10 +138,8 @@ def solve(problem, test_input=None, expected_output=None):
         if DEBUG:
             print("\n--- AUTO ESCALATION TRIGGERED ---")
 
-        # Re-run in voting mode (reuse same context)
         code, selected, voting_time = generate_with_mode(problem, use_fast=False, context=context)
 
-        # Re-run repair loop
         attempt = 0
         success, output = execute_python(code, test_input)
 
@@ -150,7 +157,26 @@ def solve(problem, test_input=None, expected_output=None):
                 code = improved
                 critic_rewrite = True
 
-        use_fast = False  # Escalated mode
+        use_fast = False
+
+    # --------------------------
+    # EXPLANATION GENERATION
+    # --------------------------
+    explanation = ""
+    try:
+        explanation_response = ask_model(
+            f"""In 2-3 sentences, explain this solution's approach, time complexity, and space complexity. Be concise and clear.
+
+Solution:
+{code}
+
+Problem:
+{problem}
+"""
+        )
+        explanation = explanation_response.strip()
+    except Exception:
+        pass
 
     total_time = time.time() - start_time
 
@@ -166,6 +192,7 @@ def solve(problem, test_input=None, expected_output=None):
 
     return {
         "code": code,
+        "explanation": explanation,
         "mode": "FAST" if use_fast else "VOTING",
         "repair_attempts": attempt,
         "critic_rewrite": critic_rewrite,

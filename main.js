@@ -5,14 +5,15 @@ const path = require("path");
 let pythonProcess = null;
 
 function startBackend() {
-
-  const pythonPath = "C:\\Users\\deads\\AppData\\Local\\Python\\bin\\python.exe";
-
   const rootPath = app.isPackaged
     ? path.join(process.resourcesPath, "app.asar.unpacked")
-    : __dirname;
+    : app.getAppPath();
 
+  const pythonPath = path.join(rootPath, ".venv", "Scripts", "python.exe");
+
+  console.log("__dirname is:", __dirname);
   console.log("Root path:", rootPath);
+  console.log("Python path:", pythonPath);
 
   pythonProcess = spawn(pythonPath, [
     "-m",

@@ -194,7 +194,39 @@ DFS approach: DFS, add to result after all neighbors visited (reverse post-order
 Use: Course schedule, task ordering, build systems, dependency resolution.
 Cycle detection: If result length < number of nodes, a cycle exists."""
     },
+{
+    "topic": "Stack using Queues",
+    "text": """Pattern: Implement Stack using Queues
+Use one queue. On push: append element, then rotate queue so new element is at front.
+Rotate by popping from front and appending to back (len(queue) - 1) times.
+push: O(n). pop/top/empty: O(1).
+Python: from collections import deque. Use deque.append() and deque.popleft()."""
+},
+{
+    "topic": "Queue using Stacks",
+    "text": """Pattern: Implement Queue using Stacks
+Use two stacks (input and output). Push to input stack. 
+Pop: if output empty, pour all of input into output (reverses order), then pop output.
+Amortized O(1) for all operations.
+Python: use two lists as stacks with .append() and .pop()."""
+},
+{
+    "topic": "Linked List Reversal",
+    "text": """Pattern: Reverse Linked List / Reverse Sublist
+Iterative: prev=None, curr=head. Loop: save next, point curr.next to prev, advance both.
+Recursive: reverse rest, point head.next.next to head, head.next = None.
+Reverse sublist: find position, reverse k nodes, reconnect.
+Time: O(n). Space: O(1) iterative, O(n) recursive."""
+},
+{
+    "topic": "Cyclic Sort",
+    "text": """Pattern: Cyclic Sort — Missing/Duplicate Numbers
+Use when array contains numbers in range [1, n] or [0, n].
+Place each number at its correct index (num - 1). Then scan for misplaced numbers.
+Find missing number, find duplicate, find all missing — all O(n) time, O(1) space."""
+},
 ]
+
 
 
 # ─────────────────────────────────────────────────

@@ -6,22 +6,17 @@ async function sendPrompt() {
     if (!promptText) return;
 
     // 🔹 Add User Message
-    chatBox.innerHTML += `
-        <div class="message user">
-            <div class="bubble">
-                ${promptText}
-            </div>
-        </div>
-    `;
+    const userDiv = document.createElement("div");
+    userDiv.className = "message user";
+    userDiv.innerHTML = `<div class="bubble">${promptText}</div>`;
+    chatBox.appendChild(userDiv);
 
     // 🔹 Add Thinking Bubble
-    chatBox.innerHTML += `
-        <div class="message bot" id="thinking">
-            <div class="bubble">
-                BonBon is thinking...
-            </div>
-        </div>
-    `;
+    const thinkingDiv = document.createElement("div");
+    thinkingDiv.className = "message bot";
+    thinkingDiv.id = "thinking";
+    thinkingDiv.innerHTML = `<div class="bubble">BonBon is thinking...</div>`;
+    chatBox.appendChild(thinkingDiv);
 
     chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -39,13 +34,10 @@ async function sendPrompt() {
         if (thinking) thinking.remove();
 
         if (!data || !data.content) {
-            chatBox.innerHTML += `
-                <div class="message bot">
-                    <div class="bubble">
-                        Error: ${JSON.stringify(data)}
-                    </div>
-                </div>
-            `;
+            const errDiv = document.createElement("div");
+            errDiv.className = "message bot";
+            errDiv.innerHTML = `<div class="bubble">Error: ${JSON.stringify(data)}</div>`;
+            chatBox.appendChild(errDiv);
             return;
         }
 
@@ -78,15 +70,17 @@ async function sendPrompt() {
             `;
         }
 
-        chatBox.innerHTML += `
-            <div class="message bot markdown">
-                <div class="bubble">
-                    ${renderedContent}
-                    ${metricsHTML}
-                    ${ragHTML}
-                </div>
+        // 🔹 Append bot response using appendChild
+        const msgDiv = document.createElement("div");
+        msgDiv.className = "message bot markdown";
+        msgDiv.innerHTML = `
+            <div class="bubble">
+                ${renderedContent}
+                ${metricsHTML}
+                ${ragHTML}
             </div>
         `;
+        chatBox.appendChild(msgDiv);
 
         // 🔹 Syntax Highlighting
         if (window.hljs) {
@@ -99,13 +93,10 @@ async function sendPrompt() {
         const thinking = document.getElementById("thinking");
         if (thinking) thinking.remove();
 
-        chatBox.innerHTML += `
-            <div class="message bot">
-                <div class="bubble">
-                    Connection Error: ${err}
-                </div>
-            </div>
-        `;
+        const errDiv = document.createElement("div");
+        errDiv.className = "message bot";
+        errDiv.innerHTML = `<div class="bubble">Connection Error: ${err}</div>`;
+        chatBox.appendChild(errDiv);
     }
 
     promptBox.value = "";

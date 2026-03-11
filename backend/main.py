@@ -65,10 +65,6 @@ def detect_mode(prompt: str):
 
 
 def get_rag_topics(prompt: str) -> list[str]:
-    """
-    Run a lightweight RAG retrieval just to get topic names for the UI.
-    Returns a list of topic strings e.g. ["Top K Elements", "Heaps"]
-    """
     try:
         from backend.app.rag.embedder import get_embedding
         from backend.app.rag.vectorstore import search, collection_count
@@ -110,10 +106,11 @@ def solve_problem(request: PromptRequest):
     # -------- DSA AGENT MODE --------
     if mode == "DSA":
         result = solve(prompt)
+        rag_topics = get_rag_topics(prompt)
         print("RAG USED:", result.get("rag_used"))
-        print("RAG TOPICS:", get_rag_topics(prompt))
+        print("RAG TOPICS:", rag_topics)
 
-        response_content = f"```python\n{result['code']}\n```"
+        response_content = f"```python\n{result['code']}\n```\n\n{result.get('explanation', '')}"
 
         conversation_history.append({
             "role": "assistant",
@@ -122,16 +119,13 @@ def solve_problem(request: PromptRequest):
 
         conversation_history = conversation_history[-MAX_HISTORY:]
 
-        # Get RAG topic names for UI display
-        rag_topics = get_rag_topics(prompt) if result.get("rag_used") else []
-
         return {
             "type": "code",
             "content": response_content,
             "mode": result.get("mode"),
             "time": result.get("total_time"),
             "repairs": result.get("repair_attempts"),
-            "rag_used": result.get("rag_used", False),
+            "rag_used": len(rag_topics) > 0,
             "rag_topics": rag_topics
         }
 
@@ -192,7 +186,6 @@ BonBon:
 
 
 # Mount frontend AFTER routes
-# Absolute path for frontend (works in packaged + dev)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
