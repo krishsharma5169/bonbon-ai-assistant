@@ -3,7 +3,8 @@ import time
 from backend.app.llm import ask_model
 from backend.app.prompts import structured_prompt, repair_prompt, critic_prompt
 from backend.app.executor import execute_python
-from backend.app.config import MAX_ATTEMPTS, DEBUG, FAST_MODE, AUTO_ESCALATE, ESCALATE_ON_REPAIR, ESCALATE_ON_CRITIC_REWRITE
+from backend.app.config import MAX_ATTEMPTS, DEBUG, FAST_MODE, AUTO_ESCALATE, ESCALATE_ON_REPAIR, ESCALATE_ON_CRITIC_REWRITE, RAG_ENABLED
+from backend.app.rag.retriever import retrieve_context
 
 
 def extract_code(text):
@@ -18,32 +19,38 @@ def extract_code(text):
     return text.strip()
 
 
-def generate_with_mode(problem, use_fast):
+def generate_with_mode(problem, use_fast, context: str = ""):
     voting_time = 0
     selected = "Single"
 
     if use_fast:
-        response = ask_model(structured_prompt(problem))
+        response = ask_model(structured_prompt(problem, context=context))
         code = extract_code(response)
     else:
         voting_start = time.time()
 
-        response_a = ask_model(structured_prompt(problem))
+        response_a = ask_model(structured_prompt(problem, context=context))
         code_a = extract_code(response_a)
 
-        response_b = ask_model(structured_prompt(problem))
+        response_b = ask_model(structured_prompt(problem, context=context))
         code_b = extract_code(response_b)
 
         comparison_prompt = f"""
-Compare Solution A and Solution B.
-Return only 'A' or 'B'.
+        You are comparing two Python solutions.
+        Return ONLY the letter 'A' or 'B' — nothing else.
 
-Solution A:
-{code_a}
+        Solution A:
+        ```python
+        {code_a}
+        ```
 
-Solution B:
-{code_b}
-"""
+        Solution B:
+        ```python
+        {code_b}
+        ```
+
+        Which solution is more correct and efficient? Reply with only 'A' or 'B'.
+        """
 
         decision = ask_model(comparison_prompt, temperature=0.1)
         match = re.search(r"\b(A|B)\b", decision)
@@ -61,10 +68,24 @@ def solve(problem, test_input=None, expected_output=None):
     first_pass_success = False
 
     # --------------------------
+    # RAG RETRIEVAL
+    # --------------------------
+    context = ""
+    if RAG_ENABLED:
+        if DEBUG:
+            print("\n[RAG] Retrieving relevant context...")
+        context = retrieve_context(problem)
+        if DEBUG:
+            if context:
+                print(f"[RAG] Context retrieved ({len(context)} chars)")
+            else:
+                print("[RAG] No relevant context found, proceeding without RAG")
+
+    # --------------------------
     # INITIAL GENERATION
     # --------------------------
     use_fast = FAST_MODE
-    code, selected, voting_time = generate_with_mode(problem, use_fast)
+    code, selected, voting_time = generate_with_mode(problem, use_fast, context=context)
 
     # --------------------------
     # EXECUTION + REPAIR
@@ -108,8 +129,8 @@ def solve(problem, test_input=None, expected_output=None):
         if DEBUG:
             print("\n--- AUTO ESCALATION TRIGGERED ---")
 
-        # Re-run in voting mode
-        code, selected, voting_time = generate_with_mode(problem, use_fast=False)
+        # Re-run in voting mode (reuse same context)
+        code, selected, voting_time = generate_with_mode(problem, use_fast=False, context=context)
 
         # Re-run repair loop
         attempt = 0
@@ -141,6 +162,7 @@ def solve(problem, test_input=None, expected_output=None):
         print("Repair Attempts:", attempt)
         print("Total Solve Time:", round(total_time, 2))
         print("Critic Rewrite:", critic_rewrite)
+        print("RAG Used:", bool(context))
 
     return {
         "code": code,
@@ -148,5 +170,6 @@ def solve(problem, test_input=None, expected_output=None):
         "repair_attempts": attempt,
         "critic_rewrite": critic_rewrite,
         "first_pass_success": first_pass_success,
-        "total_time": round(total_time, 2)
+        "total_time": round(total_time, 2),
+        "rag_used": bool(context)
     }

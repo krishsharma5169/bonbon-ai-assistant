@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from backend.app.pipeline import solve
 from backend.app.llm import ask_model
-
+from backend.app.rag.retriever import retrieve_context
 
 
 app = FastAPI()
@@ -44,7 +44,13 @@ def detect_mode(prompt: str):
     if any(word in p for word in [
         "leetcode", "optimal", "time complexity",
         "hard problem", "binary tree", "dfs", "bfs",
-        "dynamic programming"
+        "dynamic programming", "find", "given an array",
+        "most frequent", "k elements", "subarray",
+        "linked list", "graph", "matrix", "return the",
+        "sort", "search", "palindrome", "fibonacci",
+        "two sum", "sliding window", "hash map",
+        "minimum", "maximum", "longest", "shortest",
+        "count", "frequency", "permutation", "combination"
     ]):
         return "DSA"
 
@@ -56,6 +62,31 @@ def detect_mode(prompt: str):
         return "DEV"
 
     return "CHAT"
+
+
+def get_rag_topics(prompt: str) -> list[str]:
+    """
+    Run a lightweight RAG retrieval just to get topic names for the UI.
+    Returns a list of topic strings e.g. ["Top K Elements", "Heaps"]
+    """
+    try:
+        from backend.app.rag.embedder import get_embedding
+        from backend.app.rag.vectorstore import search, collection_count
+        from backend.app.config import RAG_ENABLED, RAG_MIN_SCORE, RAG_TOP_K
+
+        if not RAG_ENABLED or collection_count() == 0:
+            return []
+
+        query_embedding = get_embedding(prompt)
+        hits = search(query_embedding, n_results=RAG_TOP_K)
+        topics = [
+            h["metadata"].get("topic", "Reference")
+            for h in hits
+            if h["score"] >= RAG_MIN_SCORE
+        ]
+        return topics
+    except Exception:
+        return []
 
 
 # -------- Main Endpoint --------
@@ -79,8 +110,10 @@ def solve_problem(request: PromptRequest):
     # -------- DSA AGENT MODE --------
     if mode == "DSA":
         result = solve(prompt)
+        print("RAG USED:", result.get("rag_used"))
+        print("RAG TOPICS:", get_rag_topics(prompt))
 
-        response_content = result["code"]
+        response_content = f"```python\n{result['code']}\n```"
 
         conversation_history.append({
             "role": "assistant",
@@ -89,12 +122,17 @@ def solve_problem(request: PromptRequest):
 
         conversation_history = conversation_history[-MAX_HISTORY:]
 
+        # Get RAG topic names for UI display
+        rag_topics = get_rag_topics(prompt) if result.get("rag_used") else []
+
         return {
             "type": "code",
             "content": response_content,
             "mode": result.get("mode"),
             "time": result.get("total_time"),
-            "repairs": result.get("repair_attempts")
+            "repairs": result.get("repair_attempts"),
+            "rag_used": result.get("rag_used", False),
+            "rag_topics": rag_topics
         }
 
     # -------- DEVELOPER EXPERT MODE --------

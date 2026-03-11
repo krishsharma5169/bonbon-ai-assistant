@@ -52,16 +52,38 @@ async function sendPrompt() {
         // 🔹 Convert Markdown → HTML
         const renderedContent = marked.parse(data.content);
 
+        // 🔹 Build RAG badge if RAG was used
+        let ragHTML = "";
+        if (data.rag_used && data.rag_topics && data.rag_topics.length > 0) {
+            const chips = data.rag_topics
+                .map(topic => `<span class="rag-chip">${topic}</span>`)
+                .join("");
+            ragHTML = `
+                <div class="rag-bar">
+                    <span class="rag-badge">⚡ RAG</span>
+                    ${chips}
+                </div>
+            `;
+        }
+
+        // 🔹 Build metrics bar for DSA mode
+        let metricsHTML = "";
+        if (data.type === "code") {
+            metricsHTML = `
+                <div class="metrics-bar">
+                    <span>Mode: ${data.mode || "N/A"}</span>
+                    <span>Time: ${data.time || 0}s</span>
+                    <span>Repairs: ${data.repairs || 0}</span>
+                </div>
+            `;
+        }
+
         chatBox.innerHTML += `
             <div class="message bot markdown">
                 <div class="bubble">
                     ${renderedContent}
-                    ${data.type === "code" ? `
-                    <div style="margin-top:12px;font-size:12px;opacity:0.7;">
-                        Mode: ${data.mode || "N/A"} |
-                        Time: ${data.time || 0}s |
-                        Repairs: ${data.repairs || 0}
-                    </div>` : ""}
+                    ${metricsHTML}
+                    ${ragHTML}
                 </div>
             </div>
         `;
